@@ -1,41 +1,117 @@
-# BESS Arbitrage & Power System Simulation (2030 Projection)
+<div align="center">
 
-This repository contains a comprehensive Python-based pipeline for modeling the power grid, projecting renewable energy capacities for 2030, and evaluating Battery Energy Storage System (BESS) arbitrage strategies using Machine Learning.
+# ⚡ BESS Arbitrage & Power System Simulation
 
-## Pipeline Overview
+### German Power Grid Digital Twin — 2030 Projection
 
-The project is divided into three main scripts/modules:
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
+[![PyPSA](https://img.shields.io/badge/PyPSA-grid%20modeling-green.svg)](https://pypsa.org/)
+[![XGBoost](https://img.shields.io/badge/XGBoost-quantile%20regression-orange.svg)](https://xgboost.readthedocs.io/)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](#license)
+
+A Python pipeline for modeling the German power grid, projecting renewable capacity to 2030, and evaluating ML-driven Battery Energy Storage System (BESS) arbitrage strategies.
+
+</div>
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Pipeline](#pipeline)
+  - [1. Capacity & Demand Forecasting](#1-capacity--demand-forecasting)
+  - [2. PyPSA Grid Simulation](#2-pypsa-grid-simulation)
+  - [3. ML-Driven BESS Arbitrage Backtesting](#3-ml-driven-bess-arbitrage-backtesting)
+- [Installation](#installation)
+- [Execution Workflow](#execution-workflow)
+- [Outputs](#outputs)
+
+---
+
+## Overview
+
+This repository combines time-series forecasting, optimal power flow modeling, and machine learning to simulate how battery storage can arbitrage electricity prices on a 2030 German grid with high renewable penetration.
+
+The pipeline runs in three stages, each feeding the next:
+
+```mermaid
+flowchart LR
+    A[Capacity & Demand<br/>Forecasting] --> B[PyPSA Grid<br/>Simulation]
+    B --> C[ML BESS Arbitrage<br/>Backtesting]
+```
+
+---
+
+## Pipeline
 
 ### 1. Capacity & Demand Forecasting
-- **Models Used:** ARIMA and Holt-Winters Exponential Smoothing.
-- **Functionality:** Ingests historical ENTSO-E generation capacity and demand data (e.g., for Germany), predicting values up to 2030.
-- **Outputs:** Generates the `pypsa_capacity_2030.csv` matrix used to scale the grid model.
+
+| | |
+|---|---|
+| **Models** | ARIMA, Holt-Winters Exponential Smoothing |
+| **Input** | Historical ENTSO-E generation capacity and demand data (Germany) |
+| **Output** | `pypsa_capacity_2030.csv` — capacity matrix used to scale the grid model |
+
+Predicts capacity and demand values forward to 2030.
 
 ### 2. PyPSA Grid Simulation
-- **Tools Used:** PyPSA, Gurobi solver, Linopy.
-- **Functionality:** Scales baseline electricity networks (`base_s_50_elec_.nc`) using the 2030 capacity forecasts. It dynamically adds BESS storage units to AC buses, enforces maximum renewable energy (RE) constraints, and optimizes monthly generation dispatch.
-- **Outputs:** Combined annual baseline and 2030 projection network NetCDF files, system cost metrics (`metrics_annual.csv`), Locational Marginal Price (LMP) distributions, and comprehensive dispatch plots.
+
+| | |
+|---|---|
+| **Tools** | PyPSA, Gurobi solver, Linopy |
+| **Input** | Baseline network (`base_s_50_elec_.nc`), 2030 capacity forecasts |
+| **Output** | Combined annual + 2030 projection networks (`.nc`), `metrics_annual.csv`, LMP distributions, dispatch plots |
+
+Scales the baseline network, adds BESS units to AC buses, enforces RE constraints, and optimizes monthly dispatch.
+
+> **Note:** Requires an active Gurobi academic or commercial license.
 
 ### 3. ML-Driven BESS Arbitrage Backtesting
-- **Models Used:** XGBoost (Quantile Regression), SciPy (LP Oracle).
-- **Functionality:** Trains ML models on historical PyPSA network data to predict Locational Marginal Prices (q10, q50, q90). It establishes learned charge/discharge thresholds and executes backtested market dispatch strategies. Performance is compared against naive persistence baselines and a perfect-foresight Linear Programming (LP) Oracle.
-- **Outputs:** Financial performance summaries, capture ratios, dispatch heatmaps, and price forecasting accuracy metrics.
 
-## Installation & Dependencies
+| | |
+|---|---|
+| **Models** | XGBoost (quantile regression), SciPy (LP oracle) |
+| **Input** | Historical PyPSA network data |
+| **Output** | Financial performance summaries, capture ratios, dispatch heatmaps, forecast accuracy metrics |
 
-Ensure you have Python 3.8+ installed. The following major packages are required:
+Trains q10/q50/q90 LMP forecasters, learns charge/discharge thresholds, and backtests dispatch against a naive persistence baseline and a perfect-foresight LP oracle.
+
+---
+
+## Installation
+
+Requires Python 3.8+.
 
 ```bash
 pip install pypsa pandas numpy matplotlib seaborn statsmodels pmdarima xgboost scikit-learn scipy joblib
 ```
 
-*Note: The PyPSA simulation module is configured to use the **Gurobi** solver, which requires an active academic or commercial license.*
+---
 
 ## Execution Workflow
 
-1. **Forecasting Matrix Generation:** 
-   Run the forecasting script to build predictions and save `pypsa_capacity_2030.csv`.
-2. **Grid Simulation:** 
-   Run the PyPSA script to execute `run_monthly_simulations()` and build the optimized 2030 network projections.
-3. **Arbitrage Strategy Evaluation:** 
-   Run the ML backtesting suite to train price regressors and evaluate BESS operational revenues over the generated LMP price curves.
+```bash
+# 1. Generate the 2030 capacity forecasting matrix
+python forecasting.py
+
+# 2. Run the PyPSA grid simulation
+python grid_simulation.py   # calls run_monthly_simulations()
+
+# 3. Train and backtest the ML arbitrage strategy
+python ml_backtest.py
+```
+
+| Step | Script | Produces |
+|---|---|---|
+| 1 | Forecasting | `pypsa_capacity_2030.csv` |
+| 2 | Grid Simulation | `metrics_annual.csv`, network `.nc` files, LMP plots |
+| 3 | Arbitrage Backtest | Revenue summaries, capture ratios, heatmaps |
+
+---
+
+## Outputs
+
+- 📊 2030 renewable capacity projections
+- ⚙️ Optimized monthly dispatch networks
+- 💰 BESS arbitrage revenue vs. LP oracle benchmark
+- 📈 LMP forecast accuracy (q10/q50/q90)
