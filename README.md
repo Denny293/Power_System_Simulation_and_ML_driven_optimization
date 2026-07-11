@@ -88,13 +88,13 @@ Trains q10/q50/q90 LMP forecasters, learns charge/discharge thresholds, and back
 
 ```bash
 # 1. Generate the 2030 capacity forecasting matrix
-python forecasting.py
+python gen_proj.py
 
 # 2. Run the PyPSA grid simulation
-python grid_simulation.py   # calls run_monthly_simulations()
+python 2030_sim.py   # calls run_monthly_simulations()
 
 # 3. Train and backtest the ML arbitrage strategy
-python ml_backtest.py
+python mlbess.py
 ```
 
 | Step | Script | Produces |
